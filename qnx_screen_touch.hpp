@@ -3,18 +3,23 @@
 #include "qnx_screen_context.hpp"
 #include <vector>
 #include <functional>
-using on_touch_function_type = std::function<bool(int,      // touch status
-                                                  int,      // touch x corrdinate
-                                                  int)>;    // touch y corrdinate
 enum qnx_screen_touch_status {
     TOUCH_STATTUS_NONE,
     TOUCH_STATTUS_PRESS,
     TOUCH_STATTUS_MOVE,
     TOUCH_STATTUS_RELEASE,
 };
+using on_touch_function_type = std::function<bool(void *,                       // screen_observer
+                                                  qnx_screen_touch_status,      // touch status
+                                                  int,                          // touch x corrdinate
+                                                  int)>;                        // touch y corrdinate
+typedef struct qnx_screen_observer_ {
+    void *observer;
+    on_touch_function_type on_touch_fun;
+} qnx_screen_observer;
 class qnx_screen_touch {
 private:
-    std::vector<on_touch_function_type>touch_functions_;
+    std::vector<qnx_screen_observer>observers_;
     pthread_t listen_thread_ = 0;
     bool stop_listen_ = false;
     screen_event_t screen_ev_ = { 0 };
@@ -42,17 +47,16 @@ public:
         assert(0 == rc);
         SLOG_I("qnx screen on touch listen thread start ok!");
     }
-    void stop_listen() {
+    inline void stop_listen() {
         stop_listen_ = true;
     }
-    void add_on_touch_function(on_touch_function_type fun) {
-        touch_functions_.emplace_back(fun);
+    void add_observer(qnx_screen_observer &&observer) {
+        observers_.emplace_back(observer);
     }
 private:
     qnx_screen_touch() = default;
     virtual ~qnx_screen_touch() {
-        pthread_join(listen_thread_, nullptr);
-        stop_listen_ = true;
+        pthread_join(listen_thread_, nullptr);  // pthread_join must put here for thread can join
         screen_destroy_event(screen_ev_);
     }
     static void* capture_touch(void *arg) {
@@ -65,10 +69,14 @@ private:
         int error = 0;
         qnx_screen_touch_status touch_status = TOUCH_STATTUS_NONE;
         while(false == touch->stop_listen_) {
-            error = screen_get_event(QNX_SCREEN_CTX.screen_ctx, touch->screen_ev_, -1);
+            error = screen_get_event(QNX_SCREEN_CTX.screen_ctx, touch->screen_ev_, -1); // will block when get event from the screen
             if (error) {
                 SLOG_E("screen_get_event failed, error:%s", strerror(errno));
                 return nullptr;
+            }
+            if (true == touch->stop_listen_) {
+                SLOG_I("receive stop signal!");
+                break;
             }
             error = screen_get_event_property_iv(touch->screen_ev_, SCREEN_PROPERTY_TYPE, &status);
             if (error) {
@@ -86,8 +94,8 @@ private:
                 continue;
             }
             SLOG_I("qnx screen capture touch event:%d, position(%d,%d)", touch_status, cur_pos[0], cur_pos[1]);
-            for (auto &func : touch->touch_functions_) {
-                func(touch_status, cur_pos[0], cur_pos[1]);
+            for (auto &observer : touch->observers_) {
+                observer.on_touch_fun(observer.observer, touch_status, cur_pos[0], cur_pos[1]);
             }
         }
         SLOG_W("capture_touch thread break!");

@@ -2,7 +2,7 @@
 #include "qnx_screen_display_zone.hpp"
 #include "qnx_screen_display_image.hpp"
 #include "qnx_screen_display_text.hpp"
-#include "qnx_screen_touch.hpp"
+#include "qnx_screen_exit_button.hpp"
 #include <fcntl.h>
 int main(int argc, const char **argv) {
     if (false == SLOG_INIT()) {
@@ -81,6 +81,18 @@ int main(int argc, const char **argv) {
         return -10;
     }
     QNX_SCREEN_TOUCH.start_listen();
+    // draw a exit button
+
+    QNX_SCREEN_EXIT_BUTTON.set_button_id(100001);
+    QNX_SCREEN_EXIT_BUTTON.set_button_position(100, 100);
+    QNX_SCREEN_EXIT_BUTTON.set_button_text_size(50);
+    QNX_SCREEN_EXIT_BUTTON.set_button_scale(200, 200);
+    const wchar_t* exit_str = L"退出";
+    QNX_SCREEN_EXIT_BUTTON.set_button_text(exit_str);
+    error = QNX_SCREEN_EXIT_BUTTON.init();
+    if (error) {
+        printf("exit button init failed:%d\n", error);
+    }
     sleep(10);
     QNX_SCREEN_TOUCH.stop_listen();
     
