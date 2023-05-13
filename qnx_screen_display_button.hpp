@@ -1,7 +1,7 @@
 #pragma once
 #include "qnx_screen_display_text.hpp"
 #include "qnx_screen_touch.hpp"
-class qnx_screen_display_button {
+class qnx_screen_display_button : public qnx_screen_display_text {
 protected:
     int button_id_;
     const wchar_t* button_text_ = nullptr;
@@ -16,12 +16,16 @@ public:
     }
     virtual ~qnx_screen_display_button() = default;
     int init() {
-        QNX_SCREEN_DISPLAY_TEXT.set_font_size(button_text_size_);
-        int error = QNX_SCREEN_DISPLAY_TEXT.set_display_position(button_position_x_, button_position_y_, button_width_, button_height_);
+        int error = qnx_screen_display_text::init();
         if (error) {
             return error;
         }
-        error = QNX_SCREEN_DISPLAY_TEXT.display_text(button_text_);
+        set_font_size(button_text_size_);
+        error = set_display_position(button_position_x_, button_position_y_, button_width_, button_height_);
+        if (error) {
+            return error;
+        }
+        error = display_text(button_text_);
         if (error) {
             return error;
         }
@@ -53,7 +57,7 @@ private:
             SLOG_E("qnx_screen_display_button observer is null!");
             return false;
         }
-        if ((TOUCH_STATTUS_PRESS == status) && QNX_SCREEN_DISPLAY_TEXT.is_in_rect(x, y)) {
+        if ((TOUCH_STATTUS_PRESS == status) && self_ptr->is_in_rect(x, y)) {
             return self_ptr->do_action();
         }
         return false;

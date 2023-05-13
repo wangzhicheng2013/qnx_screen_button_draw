@@ -7,6 +7,8 @@ protected:
     int display_size_[2] = { 0 };
     int display_pos_[2] = { 0 };
     int visible_ = 1;
+public:
+    bool is_cleared = false;
 protected:
     int init_win() {
         int error = screen_create_window(&win_, QNX_SCREEN_CTX.screen_ctx);
@@ -39,7 +41,7 @@ protected:
         return 0;
     }
     void unit_win() {
-        screen_destroy_window(win_);
+        screen_destroy_window(win_);        // can call many times
     }
 public:
     inline void set_display_zorder(int zorder) {
@@ -79,7 +81,7 @@ public:
         }
         return 0;
     }
-    int set_visiable(int visible) {
+    int set_visiable(int visible) {     // can set visible after the win init ok
         visible_ = visible;
         int error = screen_set_window_property_iv(win_, SCREEN_PROPERTY_VISIBLE, &visible_);
         if (error) {
@@ -87,5 +89,9 @@ public:
             return error;
         }
         return 0;
+    }
+    inline void clear() {
+        screen_destroy_window(win_);
+        is_cleared = true;
     }
 };

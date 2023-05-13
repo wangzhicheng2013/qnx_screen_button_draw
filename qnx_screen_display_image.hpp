@@ -6,9 +6,9 @@ private:
     int image_size_ = 0;
     int image_scale_[2] = { 0 };
 public:
-    static qnx_screen_display_image& get_instance() {
-        static qnx_screen_display_image instance;
-        return instance;
+    qnx_screen_display_image() = default;
+    virtual ~qnx_screen_display_image() {
+        unit_win();
     }
     int init() {
         return init_win();
@@ -59,10 +59,6 @@ public:
         return 0;
     }
 private:
-    qnx_screen_display_image() = default;
-    virtual ~qnx_screen_display_image() {
-        unit_win();
-    }
     int init_win() {
         int error = qnx_screen_display::init_win();
         if (error) {
@@ -82,4 +78,3 @@ private:
         return 0;
     }
 };
-#define QNX_SCREEN_DISPLAY_IMAGE qnx_screen_display_image::get_instance()
