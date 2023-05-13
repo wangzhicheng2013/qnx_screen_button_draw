@@ -17,7 +17,3 @@ enum qnx_screen_default_zorder {
 const static int MIN_DISPLAY_WIDTH = 500;
 const static int MIN_DISPLAY_HEIGHT = 500;
 const static int DEFAULT_FONT_SIZE = 36;
-enum qnx_screen_visibility {
-    SCREEN_GONE,
-    SCREEN_VISIBLE,
-};
