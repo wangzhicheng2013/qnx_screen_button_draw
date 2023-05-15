@@ -51,7 +51,7 @@ int main(int argc, const char **argv) {
     sleep(5);
     text1.clear();
     sleep(5);
-    if (text1.is_cleared) {
+    if (text1.is_clear()) {
         if (true == text1.init()) {
             text1.set_display_position(100, 100, 300, 300);
             text1.display_text(str);
